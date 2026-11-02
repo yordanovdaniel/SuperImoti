@@ -1,0 +1,22 @@
+@model ListingEditorViewModel
+@{
+    ViewData["Title"] = "Публикувай обява";
+}
+<div class="row justify-content-center">
+    <div class="col-xl-10">
+        <h1 class="h3 mb-1">Публикувай обява</h1>
+        <p class="text-body-secondary">Полетата, отбелязани със <span class="text-danger">*</span>, са задължителни.</p>
+
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
+            <partial name="_ListingForm" model="Model" />
+            <div class="d-flex gap-2 mb-4">
+                <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-megaphone"></i> Публикувай</button>
+                <a asp-action="Index" class="btn btn-link">Отказ</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

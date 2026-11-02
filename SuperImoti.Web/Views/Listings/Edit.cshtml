@@ -1,0 +1,30 @@
+@model ListingEditorViewModel
+@{
+    ViewData["Title"] = "Редактиране на обява";
+}
+<div class="row justify-content-center">
+    <div class="col-xl-10">
+        <h1 class="h3 mb-1">Редактиране на обява</h1>
+        <p class="text-body-secondary">Полетата, отбелязани със <span class="text-danger">*</span>, са задължителни.</p>
+
+        @if (Model.IsImported)
+        {
+            <div class="alert alert-info small">
+                <i class="bi bi-info-circle"></i> Обявата е импортирана от imot.bg. Ако скрейпърът засече промяна в нея,
+                следващата синхронизация ще замени тези данни с актуалните от imot.bg.
+            </div>
+        }
+
+        <form asp-action="Edit" asp-route-id="@Model.Input.Id" method="post" enctype="multipart/form-data">
+            <partial name="_ListingForm" model="Model" />
+            <div class="d-flex gap-2 mb-4">
+                <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-check-lg"></i> Запази промените</button>
+                <a asp-action="Details" asp-route-id="@Model.Input.Id" class="btn btn-link">Отказ</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,30 @@
+@model ListingDeleteViewModel
+@{
+    ViewData["Title"] = "Изтриване на обява";
+}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="h3 mb-3">Изтриване на обява</h1>
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i>
+            Сигурни ли сте, че искате да изтриете тази обява? Действието е необратимо — ще бъдат изтрити и
+            @Model.CommentCount коментара и @Model.FavoriteCount отметки „любими“.
+        </div>
+        @if (Model.IsImported)
+        {
+            <div class="alert alert-info small">
+                Обявата е импортирана от imot.bg. Ако все още я има в данните на скрейпъра,
+                тя ще се появи отново при следващата синхронизация.
+            </div>
+        }
+        <div class="row">
+            <div class="col-md-6">
+                <partial name="_ListingCard" model="Model.Card" />
+            </div>
+        </div>
+        <form asp-action="Delete" asp-route-id="@Model.Card.Id" method="post" class="mt-3 d-flex gap-2">
+            <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Да, изтрий</button>
+            <a asp-action="Details" asp-route-id="@Model.Card.Id" class="btn btn-outline-secondary">Отказ</a>
+        </form>
+    </div>
+</div>

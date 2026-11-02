@@ -1,0 +1,185 @@
+@model ListingEditorViewModel
+@{
+    var typeItems = Model.Options.PropertyTypesByCategory
+        .SelectMany(group =>
+        {
+            var optionGroup = new SelectListGroup { Name = group.Key.GetDisplayName() };
+            return group.Select(t => new SelectListItem(t.Name, t.Id.ToString()) { Group = optionGroup });
+        })
+        .ToList();
+    var districtItems = Model.Options.Districts.Select(d => new SelectListItem(d.Name, d.Id.ToString())).ToList();
+    var dealItems = Html.GetEnumSelectList<DealKind>();
+    var currencyItems = Html.GetEnumSelectList<Currency>();
+}
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+<input type="hidden" asp-for="Input.Id" />
+<input type="hidden" asp-for="Input.ConcurrencyStamp" />
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-body fw-semibold">1. Основна информация</div>
+    <div class="card-body row g-3">
+        <div class="col-12">
+            <label asp-for="Input.Title" class="form-label required"></label>
+            <input asp-for="Input.Title" class="form-control" placeholder="напр. Светъл тристаен апартамент до метростанция" />
+            <span asp-validation-for="Input.Title" class="text-danger small"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Input.DealKind" class="form-label required"></label>
+            <select asp-for="Input.DealKind" asp-items="dealItems" class="form-select">
+                <option value="">— изберете —</option>
+            </select>
+            <span asp-validation-for="Input.DealKind" class="text-danger small"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Input.PropertyTypeId" class="form-label required"></label>
+            <select asp-for="Input.PropertyTypeId" asp-items="typeItems" class="form-select">
+                <option value="">— изберете —</option>
+            </select>
+            <span asp-validation-for="Input.PropertyTypeId" class="text-danger small"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Input.DistrictId" class="form-label required"></label>
+            <select asp-for="Input.DistrictId" asp-items="districtItems" class="form-select">
+                <option value="">— изберете —</option>
+            </select>
+            <span asp-validation-for="Input.DistrictId" class="text-danger small"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="Input.Street" class="form-label"></label>
+            <input asp-for="Input.Street" class="form-control" placeholder="напр. ул. Шипка 12" />
+            <span asp-validation-for="Input.Street" class="text-danger small"></span>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-body fw-semibold">2. Цена и площ</div>
+    <div class="card-body row g-3">
+        <div class="col-md-4">
+            <label asp-for="Input.Price" class="form-label"></label>
+            <input asp-for="Input.Price" type="number" step="any" min="1" class="form-control js-price-input" />
+            <span asp-validation-for="Input.Price" class="text-danger small"></span>
+            <div class="form-check mt-2">
+                <input asp-for="Input.PriceOnRequest" class="form-check-input js-price-on-request" />
+                <label asp-for="Input.PriceOnRequest" class="form-check-label"></label>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="Input.Currency" class="form-label"></label>
+            <select asp-for="Input.Currency" asp-items="currencyItems" class="form-select"></select>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Input.VatNote" class="form-label"></label>
+            <select asp-for="Input.VatNote" class="form-select">
+                <option value="">— не е посочено —</option>
+                @foreach (var note in ListingEditorViewModel.VatNotes)
+                {
+                    <option value="@note">@note</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Input.Area" class="form-label required"></label>
+            <input asp-for="Input.Area" type="number" step="any" min="1" class="form-control" />
+            <span asp-validation-for="Input.Area" class="text-danger small"></span>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-body fw-semibold">3. Сграда</div>
+    <div class="card-body row g-3">
+        <div class="col-md-3">
+            <label asp-for="Input.Floor" class="form-label"></label>
+            <input asp-for="Input.Floor" type="number" class="form-control" placeholder="0 = партер" />
+            <span asp-validation-for="Input.Floor" class="text-danger small"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Input.TotalFloors" class="form-label"></label>
+            <input asp-for="Input.TotalFloors" type="number" class="form-control" />
+            <span asp-validation-for="Input.TotalFloors" class="text-danger small"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Input.ConstructionType" class="form-label"></label>
+            <input asp-for="Input.ConstructionType" class="form-control" list="construction-types" placeholder="Тухла, Панел…" />
+            <datalist id="construction-types">
+                @foreach (var type in ListingEditorViewModel.ConstructionTypes)
+                {
+                    <option value="@type"></option>
+                }
+            </datalist>
+            <span asp-validation-for="Input.ConstructionType" class="text-danger small"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Input.CompletionPeriod" class="form-label"></label>
+            <input asp-for="Input.CompletionPeriod" class="form-control" placeholder="напр. 2024 г." />
+            <span asp-validation-for="Input.CompletionPeriod" class="text-danger small"></span>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-body fw-semibold">4. Описание и особености</div>
+    <div class="card-body">
+        <div class="mb-3">
+            <label asp-for="Input.Description" class="form-label required"></label>
+            <textarea asp-for="Input.Description" class="form-control" rows="7"
+                      placeholder="Разположение, състояние, транспорт, близки обекти…"></textarea>
+            <span asp-validation-for="Input.Description" class="text-danger small"></span>
+        </div>
+        <span class="form-label d-block">Особености</span>
+        <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-1">
+            @foreach (var feature in Model.Options.Features)
+            {
+                <div class="col">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="Input.FeatureIds" value="@feature.Id"
+                               id="feature-@feature.Id" checked="@Model.Input.FeatureIds.Contains(feature.Id)" />
+                        <label class="form-check-label small" for="feature-@feature.Id">@feature.Name</label>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-body fw-semibold">5. Контакт и снимки</div>
+    <div class="card-body row g-3">
+        <div class="col-md-6">
+            <label asp-for="Input.ContactPhone" class="form-label"></label>
+            <input asp-for="Input.ContactPhone" type="tel" class="form-control" placeholder="0888 123 456" />
+            <span asp-validation-for="Input.ContactPhone" class="text-danger small"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Input.NewPhotos" class="form-label"></label>
+            <input asp-for="Input.NewPhotos" type="file" multiple class="form-control"
+                   accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
+            <div class="form-text">До 10 снимки наведнъж, до 5 MB всяка (JPG, PNG, WEBP).</div>
+            <span asp-validation-for="Input.NewPhotos" class="text-danger small"></span>
+        </div>
+
+        @if (Model.ExistingPhotos.Count > 0)
+        {
+            <div class="col-12">
+                <span class="form-label d-block">Снимки в обявата — отбележете тези, които искате да премахнете</span>
+                <div class="row row-cols-3 row-cols-md-5 row-cols-lg-6 g-2">
+                    @foreach (var photo in Model.ExistingPhotos)
+                    {
+                        <div class="col">
+                            <label class="photo-pick">
+                                <img src="@photo.Url" alt="" loading="lazy" onerror="this.onerror=null;this.src='/img/placeholder.svg';" />
+                                <span class="form-check small mt-1">
+                                    <input class="form-check-input" type="checkbox" name="Input.RemovePhotoIds" value="@photo.Id"
+                                           checked="@Model.Input.RemovePhotoIds.Contains(photo.Id)" />
+                                    <span class="form-check-label">Премахни</span>
+                                </span>
+                            </label>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

@@ -88,14 +88,19 @@ builder.Services.PostConfigure<ScraperDataOptions>(options =>
         options.SourceFolder = Path.GetFullPath(Path.Combine(contentRoot, options.SourceFolder));
     }
 });
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
 
 builder.Services.AddScoped<ListingQueryService>();
 builder.Services.AddScoped<LookupService>();
+builder.Services.AddScoped<NewListingNotifier>();
 builder.Services.AddScoped<ScraperImporter>();
 builder.Services.AddSingleton<PhotoUrlResolver>();
 builder.Services.AddSingleton<PhotoStorage>();
 builder.Services.AddSingleton<ImportCoordinator>();
+builder.Services.AddSingleton<EmailQueue>();
+builder.Services.AddSingleton<SmtpEmailSender>();
 builder.Services.AddHostedService<ImportBackgroundService>();
+builder.Services.AddHostedService<EmailBackgroundService>();
 
 var app = builder.Build();
 
@@ -155,3 +160,8 @@ app.MapControllerRoute(
     .WithStaticAssets();
 
 app.Run();
+
+// Lets the integration tests start the site with WebApplicationFactory<Program>.
+public partial class Program
+{
+}
