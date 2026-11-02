@@ -399,3 +399,6 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# SuperImoti runtime data: SQLite database, uploaded photos, e-mails written to disk
+**/App_Data/
