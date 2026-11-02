@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="SuperImoti.Tests/SuperImoti.Tests.csproj" />
   <Project Path="SuperImoti.Web/SuperImoti.Web.csproj" />
 </Solution>
