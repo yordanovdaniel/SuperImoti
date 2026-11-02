@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SuperImoti.Web.Data;
+using SuperImoti.Web.Data.Import;
 using SuperImoti.Web.Infrastructure;
 using SuperImoti.Web.Models;
 
@@ -47,6 +48,19 @@ builder.Services.AddControllersWithViews(options =>
     // Every POST form must carry an anti-forgery token.
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
 });
+
+// ---------- Import from the imot.bg scraper ----------
+builder.Services.Configure<ScraperDataOptions>(builder.Configuration.GetSection(ScraperDataOptions.SectionName));
+builder.Services.PostConfigure<ScraperDataOptions>(options =>
+{
+    if (!string.IsNullOrWhiteSpace(options.SourceFolder) && !Path.IsPathRooted(options.SourceFolder))
+    {
+        options.SourceFolder = Path.GetFullPath(Path.Combine(contentRoot, options.SourceFolder));
+    }
+});
+builder.Services.AddScoped<ScraperImporter>();
+builder.Services.AddSingleton<ImportCoordinator>();
+builder.Services.AddHostedService<ImportBackgroundService>();
 
 var app = builder.Build();
 
