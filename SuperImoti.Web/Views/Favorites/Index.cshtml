@@ -1,0 +1,18 @@
+@model PagedResult<ListingCardViewModel>
+@{
+    ViewData["Title"] = "Любими обяви";
+    var grid = new ListingGridViewModel(Model.Items, 3,
+        "Все още нямате любими обяви. Натиснете сърцето на някоя обява, за да я запазите тук.");
+    var pager = new PaginationViewModel
+    {
+        Page = Model.Page,
+        TotalPages = Model.TotalPages,
+        PageUrl = page => Url.Action("Index", new { page })!,
+    };
+}
+<div class="mb-3">
+    <h1 class="h3 mb-0"><i class="bi bi-heart-fill text-danger"></i> Любими обяви</h1>
+    <div class="small text-body-secondary">@Fmt.Number(Model.TotalCount) запазени обяви</div>
+</div>
+<partial name="_ListingGrid" model="grid" />
+<partial name="_Pagination" model="pager" />
