@@ -1,0 +1,103 @@
+@model LookupOptions
+@{
+    ViewData["Title"] = "Статистика по квартали";
+    var config = new
+    {
+        dataUrl = Url.Action("Districts", "Stats"),
+        listingsUrl = Url.Action("Index", "Listings"),
+        categories = Enum.GetValues<PropertyCategory>()
+            .Select(c => new { value = c.ToString(), label = c.GetDisplayName() }),
+        propertyTypes = Model.PropertyTypes
+            .Select(t => new { id = t.Id, name = t.Name, category = t.Category.ToString() }),
+    };
+}
+<h1 class="h3 mb-1">Статистика по квартали</h1>
+<p class="text-body-secondary">
+    Средни цени на активните обяви. Таблицата е Vue.js приложение, което зарежда данните от
+    <code>@Url.Action("Districts", "Stats")</code> като JSON и ги подрежда и филтрира в браузъра.
+</p>
+
+<div id="stats-app" v-cloak>
+    <div class="card card-body shadow-sm mb-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-sm-6 col-lg-3">
+                <label class="form-label small fw-semibold" for="s-deal">Сделка</label>
+                <select id="s-deal" class="form-select" v-model="deal">
+                    <option value="Sale">Продажба</option>
+                    <option value="Rent">Наем</option>
+                </select>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <label class="form-label small fw-semibold" for="s-category">Категория</label>
+                <select id="s-category" class="form-select" v-model="category" v-on:change="type = ''">
+                    <option value="">Всички категории</option>
+                    <option v-for="c in categories" v-bind:key="c.value" v-bind:value="c.value">{{ c.label }}</option>
+                </select>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <label class="form-label small fw-semibold" for="s-type">Вид имот</label>
+                <select id="s-type" class="form-select" v-model="type">
+                    <option value="">Всички от категорията</option>
+                    <option v-for="t in typesInCategory" v-bind:key="t.id" v-bind:value="String(t.id)">{{ t.name }}</option>
+                </select>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <label class="form-label small fw-semibold" for="s-search">Квартал</label>
+                <input id="s-search" type="search" class="form-control" v-model.trim="search" placeholder="Търси квартал" />
+            </div>
+        </div>
+    </div>
+
+    <div v-if="error" class="alert alert-danger">{{ error }}</div>
+
+    <div class="row row-cols-1 row-cols-sm-3 g-3 mb-3">
+        <div class="col"><div class="stat-tile"><div class="stat-value">{{ filtered.length }}</div><div class="stat-label">квартала</div></div></div>
+        <div class="col"><div class="stat-tile"><div class="stat-value">{{ fmt(totalCount) }}</div><div class="stat-label">обяви с цена</div></div></div>
+        <div class="col"><div class="stat-tile"><div class="stat-value">{{ fmt(averagePerSqm) }} €</div><div class="stat-label">средна цена на м²</div></div></div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 stats-table">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col"><button type="button" class="sort-btn" v-on:click="sortBy('district')">Квартал {{ arrow('district') }}</button></th>
+                        <th scope="col" class="text-end"><button type="button" class="sort-btn" v-on:click="sortBy('count')">Обяви {{ arrow('count') }}</button></th>
+                        <th scope="col" class="text-end"><button type="button" class="sort-btn" v-on:click="sortBy('avgPrice')">Средна цена {{ arrow('avgPrice') }}</button></th>
+                        <th scope="col" class="text-end"><button type="button" class="sort-btn" v-on:click="sortBy('avgPricePerSqm')">Цена на м² {{ arrow('avgPricePerSqm') }}</button></th>
+                        <th scope="col" class="text-end d-none d-md-table-cell">Мин. – макс. на м²</th>
+                        <th scope="col" class="d-none d-lg-table-cell" style="width: 22%">Сравнение</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-if="loading">
+                        <td colspan="6" class="text-center py-4"><span class="spinner-border spinner-border-sm"></span> Зареждане…</td>
+                    </tr>
+                    <tr v-else-if="filtered.length === 0">
+                        <td colspan="6" class="text-center py-4 text-body-secondary">Няма данни за избраните филтри.</td>
+                    </tr>
+                    <template v-else>
+                        <tr v-for="row in filtered" v-bind:key="row.districtId">
+                            <td><a v-bind:href="listingsLink(row)">{{ row.district }}</a></td>
+                            <td class="text-end">{{ fmt(row.count) }}</td>
+                            <td class="text-end">{{ fmt(row.avgPrice) }} €</td>
+                            <td class="text-end fw-semibold">{{ fmt(row.avgPricePerSqm) }} €</td>
+                            <td class="text-end small text-body-secondary d-none d-md-table-cell">{{ fmt(row.minPricePerSqm) }} – {{ fmt(row.maxPricePerSqm) }} €</td>
+                            <td class="d-none d-lg-table-cell">
+                                <div class="bar" v-bind:title="fmt(row.avgPricePerSqm) + ' €/м²'">
+                                    <div class="bar-fill" v-bind:style="{ width: barWidth(row) }"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+    <script>window.statsConfig = @Json.Serialize(config);</script>
+    <script src="~/js/stats.js" asp-append-version="true"></script>
+}
