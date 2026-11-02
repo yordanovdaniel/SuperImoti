@@ -1,0 +1,141 @@
+@model AdminIndexViewModel
+@{
+    ViewData["Title"] = "Администрация";
+    var sync = Model.Import;
+}
+<h1 class="h3 mb-3"><i class="bi bi-speedometer2"></i> Администрация</h1>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <section class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5">Данни от скрейпъра (imot.bg)</h2>
+                <dl class="row small mb-3">
+                    <dt class="col-sm-4">Папка</dt>
+                    <dd class="col-sm-8"><code>@(string.IsNullOrWhiteSpace(Model.SourceFolder) ? "(не е настроена)" : Model.SourceFolder)</code></dd>
+                    <dt class="col-sm-4">База данни</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.SourceDatabaseExists)
+                        {
+                            <span class="text-success"><i class="bi bi-check-circle"></i> намерена</span>
+                        }
+                        else
+                        {
+                            <span class="text-danger"><i class="bi bi-x-circle"></i> не е намерена</span>
+                        }
+                    </dd>
+                    <dt class="col-sm-4">Снимки</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.SourceImagesExist)
+                        {
+                            <span class="text-success"><i class="bi bi-check-circle"></i> папката е намерена</span>
+                        }
+                        else
+                        {
+                            <span class="text-danger"><i class="bi bi-x-circle"></i> папката не е намерена</span>
+                        }
+                    </dd>
+                </dl>
+
+                @if (sync.IsRunning)
+                {
+                    <div class="mb-2 small">Тече синхронизация: <strong>@sync.Stage</strong> — @Fmt.Number(sync.Processed) от @Fmt.Number(sync.Total)</div>
+                    <div class="progress mb-3" role="progressbar" aria-label="Прогрес на синхронизацията"
+                         aria-valuenow="@sync.Percent" aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: @(sync.Percent)%">@(sync.Percent)%</div>
+                    </div>
+                }
+                else if (sync.Error is not null)
+                {
+                    <div class="alert alert-danger small"><i class="bi bi-x-octagon"></i> Последната синхронизация е неуспешна: @sync.Error</div>
+                }
+                else if (sync.LastResult is { } result)
+                {
+                    <div class="alert alert-success small mb-3">
+                        <i class="bi bi-check2-circle"></i>
+                        Последна синхронизация: @Fmt.DateAndTime(sync.FinishedUtc) за @result.Duration.TotalSeconds.ToString("0.0") сек.
+                        — нови обяви: <strong>@Fmt.Number(result.ListingsAdded)</strong>,
+                        обновени: <strong>@Fmt.Number(result.ListingsUpdated)</strong>,
+                        без промяна: @Fmt.Number(result.ListingsUnchanged),
+                        нови снимки: @Fmt.Number(result.PhotosAdded),
+                        нови събития: @Fmt.Number(result.EventsAdded).
+                        @if (result.PhotosWithoutFile > 0)
+                        {
+                            <br />
+                            <span class="text-body-secondary">
+                                @Fmt.Number(result.PhotosWithoutFile) снимки са отбелязани като изтеглени, но файловете им липсват в папката
+                                images — ще бъдат добавени, когато файловете се появят.
+                            </span>
+                        }
+                    </div>
+                }
+
+                <form asp-action="Import" method="post">
+                    <button type="submit" class="btn btn-primary" disabled="@(sync.IsRunning || !Model.SourceDatabaseExists)">
+                        <i class="bi bi-arrow-repeat"></i> Синхронизирай сега
+                    </button>
+                </form>
+                <p class="small text-body-secondary mt-2 mb-0">
+                    Синхронизацията добавя новите обяви, обновява променените и снимките, изтеглени от скрейпъра.
+                    Работи във фонов режим, сайтът остава достъпен.
+                </p>
+            </div>
+        </section>
+
+        <section class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="h5 mb-0">Най-нови потребители</h2>
+                    <a class="btn btn-sm btn-outline-primary" asp-controller="Districts" asp-action="Index">Управление на кварталите</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr><th>Име</th><th>Имейл</th><th>Регистрация</th><th class="text-end">Обяви</th><th class="text-center">Известия</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Model.LatestUsers)
+                            {
+                                <tr>
+                                    <td>@user.DisplayName</td>
+                                    <td class="small">@user.Email</td>
+                                    <td class="small">@Fmt.Date(user.CreatedUtc)</td>
+                                    <td class="text-end">@user.ListingCount</td>
+                                    <td class="text-center">@(user.Notify ? "✓" : "—")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="row row-cols-2 g-3 mb-4">
+            <div class="col"><div class="stat-tile"><div class="stat-value">@Fmt.Number(Model.ImportedListings)</div><div class="stat-label">обяви от imot.bg</div></div></div>
+            <div class="col"><div class="stat-tile"><div class="stat-value">@Fmt.Number(Model.UserListings)</div><div class="stat-label">обяви от потребители</div></div></div>
+            <div class="col"><div class="stat-tile"><div class="stat-value">@Fmt.Number(Model.Photos)</div><div class="stat-label">снимки</div></div></div>
+            <div class="col"><div class="stat-tile"><div class="stat-value">@Fmt.Number(Model.Users)</div><div class="stat-label">потребители</div></div></div>
+            <div class="col"><div class="stat-tile"><div class="stat-value">@Fmt.Number(Model.Comments)</div><div class="stat-label">коментари</div></div></div>
+            <div class="col"><div class="stat-tile"><div class="stat-value">@Fmt.Number(Model.Favorites)</div><div class="stat-label">отметки „любими“</div></div></div>
+        </div>
+        <div class="card shadow-sm">
+            <div class="card-body small">
+                <h2 class="h6">Имейл известия</h2>
+                <p class="mb-1">
+                    Когато няма настроен SMTP сървър (<code>Email:SmtpHost</code>), имейлите се записват като .eml файлове
+                    в <code>App_Data/mail</code>, за да могат да се разгледат.
+                </p>
+                <p class="mb-0">Записани имейли: <strong>@Fmt.Number(Model.QueuedEmailFiles)</strong></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @if (sync.IsRunning)
+    {
+        <script>setTimeout(function () { location.reload(); }, 4000);</script>
+    }
+}
