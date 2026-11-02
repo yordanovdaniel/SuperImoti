@@ -1,0 +1,31 @@
+@model FavoriteButtonViewModel
+@{
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+    var label = Model.IsFavorite ? "Премахни от любими" : "Добави в любими";
+}
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <form asp-controller="Favorites" asp-action="Toggle" method="post" class="js-favorite-form d-inline">
+        <input type="hidden" name="listingId" value="@Model.ListingId" />
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+        <button type="submit" class="btn btn-favorite @(Model.IsFavorite ? "is-favorite" : null)"
+                title="@label" aria-label="@label" aria-pressed="@(Model.IsFavorite ? "true" : "false")">
+            <i class="bi @(Model.IsFavorite ? "bi-heart-fill" : "bi-heart")"></i>
+            @if (!Model.Compact)
+            {
+                <span class="ms-1 js-favorite-label">@(Model.IsFavorite ? "В любими" : "Запази")</span>
+            }
+        </button>
+    </form>
+}
+else
+{
+    <a class="btn btn-favorite" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl"
+       title="Влезте, за да запазвате обяви" aria-label="Влезте, за да запазвате обяви">
+        <i class="bi bi-heart"></i>
+        @if (!Model.Compact)
+        {
+            <span class="ms-1">Запази</span>
+        }
+    </a>
+}

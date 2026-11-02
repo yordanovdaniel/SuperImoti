@@ -1,0 +1,56 @@
+@model ListingCardViewModel
+@{
+    var favorite = new FavoriteButtonViewModel(Model.Id, Model.IsFavorite);
+}
+<article class="card listing-card h-100 shadow-sm @(Model.Status == ListingStatus.Inactive ? "is-inactive" : null)">
+    <a asp-controller="Listings" asp-action="Details" asp-route-id="@Model.Id" class="listing-card-media">
+        <img src="@Model.CoverUrl" alt="@Model.Title" loading="lazy" class="listing-card-img"
+             onerror="this.onerror=null;this.src='/img/placeholder.svg';" />
+        <span class="badge listing-deal @(Model.DealKind == DealKind.Rent ? "deal-rent" : "deal-sale")">@Model.DealKind.GetDisplayName()</span>
+        @if (Model.PhotoCount > 0)
+        {
+            <span class="badge listing-photos"><i class="bi bi-camera"></i> @Model.PhotoCount</span>
+        }
+        @if (Model.Status == ListingStatus.Inactive)
+        {
+            <span class="badge text-bg-secondary listing-status">Неактивна</span>
+        }
+        else if (!Model.IsImported)
+        {
+            <span class="badge text-bg-warning listing-status">SuperImoti</span>
+        }
+    </a>
+    <div class="card-body d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-start gap-2">
+            <div>
+                <div class="listing-price">@Fmt.Money(Model.Price, Model.Currency)</div>
+                @if (Model.PricePerSqm is not null)
+                {
+                    <div class="small text-body-secondary">@Fmt.PerSqm(Model.PricePerSqm, Model.Currency)</div>
+                }
+            </div>
+            <partial name="_FavoriteButton" model="favorite" />
+        </div>
+        @if (Model.HasPriceDrop)
+        {
+            <div class="small text-success fw-semibold mt-1">
+                <i class="bi bi-arrow-down-circle"></i> намалена от @Fmt.Money(Model.PreviousPrice, Model.Currency)
+            </div>
+        }
+        <h3 class="h6 mt-2 mb-1 listing-title">
+            <a asp-controller="Listings" asp-action="Details" asp-route-id="@Model.Id" class="text-reset text-decoration-none">@Model.Title</a>
+        </h3>
+        <div class="small text-body-secondary mb-2"><i class="bi bi-geo-alt"></i> @Model.District</div>
+        <div class="small mt-auto d-flex flex-wrap gap-3 listing-facts">
+            <span><i class="bi bi-arrows-angle-expand"></i> @Fmt.Area(Model.Area)</span>
+            @if (Model.Floor is not null || Model.TotalFloors is not null)
+            {
+                <span><i class="bi bi-building"></i> @Fmt.Floor(Model.Floor, Model.TotalFloors)</span>
+            }
+        </div>
+    </div>
+    <div class="card-footer bg-transparent small text-body-secondary d-flex justify-content-between">
+        <span class="text-truncate me-2">@(Model.SellerName ?? "Частно лице")</span>
+        <span class="text-nowrap">@Fmt.Ago(Model.CreatedUtc)</span>
+    </div>
+</article>

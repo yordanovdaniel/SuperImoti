@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Няма снимка">
+  <rect width="400" height="300" fill="#e9ecef"/>
+  <g fill="none" stroke="#adb5bd" stroke-width="10" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M140 160 L200 110 L260 160"/>
+    <path d="M155 150 V205 H245 V150"/>
+    <path d="M188 205 V175 H212 V205"/>
+  </g>
+  <text x="200" y="245" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="18" fill="#868e96">Няма снимка</text>
+</svg>

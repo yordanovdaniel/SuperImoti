@@ -1,0 +1,93 @@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+
+    string Active(string c, string? a = null) =>
+        string.Equals(controller, c, StringComparison.OrdinalIgnoreCase)
+        && (a is null || string.Equals(action, a, StringComparison.OrdinalIgnoreCase))
+            ? "active"
+            : string.Empty;
+}
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · SuperImoti</title>
+    <meta name="description" content="SuperImoti — обяви за имоти в София, събрани от imot.bg, с филтри, история на цените и статистика по квартали." />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <header>
+        <nav class="navbar navbar-expand-lg site-navbar shadow-sm" data-bs-theme="dark">
+            <div class="container">
+                <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-buildings me-1"></i>SuperImoti
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+                        aria-controls="mainNav" aria-expanded="false" aria-label="Меню">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link @(Active("Home", "Index"))" asp-controller="Home" asp-action="Index">Начало</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle @(Active("Listings"))" href="#" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">Обяви</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="Listings" asp-action="Index">Всички обяви</a></li>
+                                <li><a class="dropdown-item" asp-controller="Listings" asp-action="Index" asp-route-deal="Sale">Продажби</a></li>
+                                <li><a class="dropdown-item" asp-controller="Listings" asp-action="Index" asp-route-deal="Rent">Наеми</a></li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li><a class="dropdown-item" asp-controller="Listings" asp-action="Index" asp-route-sort="newest">Най-нови</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(Active("Districts"))" asp-controller="Districts" asp-action="Index">Квартали</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(Active("Sellers"))" asp-controller="Sellers" asp-action="Index">Агенции</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(Active("Stats"))" asp-controller="Stats" asp-action="Index">Статистика</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(Active("Home", "About"))" asp-controller="Home" asp-action="About">За проекта</a>
+                        </li>
+                    </ul>
+                    <partial name="_LoginPartial" />
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <partial name="_ImportBanner" />
+
+    @await RenderSectionAsync("Hero", required: false)
+
+    <main role="main" class="container flex-grow-1 py-4">
+        <partial name="_Alerts" />
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer mt-auto py-4">
+        <div class="container d-flex flex-column flex-md-row justify-content-between gap-2 small">
+            <span>&copy; @DateTime.Now.Year SuperImoti · учебен проект с ASP.NET Core MVC</span>
+            <span>
+                Данни: <a href="https://www.imot.bg" target="_blank" rel="noopener">imot.bg</a>
+                · <a asp-controller="Home" asp-action="About">За проекта</a>
+            </span>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

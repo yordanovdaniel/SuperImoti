@@ -1,0 +1,20 @@
+@model StatusCodeViewModel
+@{
+    ViewData["Title"] = Model.Title;
+    var icon = Model.Code switch
+    {
+        404 => "bi-signpost-split",
+        403 => "bi-shield-lock",
+        _ => "bi-exclamation-octagon",
+    };
+}
+<div class="error-page text-center py-5">
+    <i class="bi @icon display-1 text-body-secondary"></i>
+    <div class="display-6 fw-bold mt-2">@Model.Code</div>
+    <h1 class="h3">@Model.Title</h1>
+    <p class="text-body-secondary">@Model.Message</p>
+    <div class="d-flex justify-content-center gap-2">
+        <a class="btn btn-primary" asp-controller="Listings" asp-action="Index"><i class="bi bi-search"></i> Към обявите</a>
+        <a class="btn btn-outline-secondary" asp-controller="Home" asp-action="Index">Начало</a>
+    </div>
+</div>

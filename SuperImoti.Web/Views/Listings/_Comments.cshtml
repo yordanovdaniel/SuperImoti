@@ -1,0 +1,61 @@
+@model ListingDetailsViewModel
+@{
+    var comments = Model.Listing.Comments;
+    var returnUrl = Url.Action("Details", "Listings", new { id = Model.Listing.Id }) + "#comments";
+}
+<section class="card shadow-sm mb-4" id="comments">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Коментари <span class="badge text-bg-light">@comments.Count</span></h2>
+
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <form asp-controller="Comments" asp-action="Create" method="post" class="mb-4">
+                <input type="hidden" asp-for="NewComment.ListingId" />
+                <div class="mb-2">
+                    <label asp-for="NewComment.Text" class="visually-hidden"></label>
+                    <textarea asp-for="NewComment.Text" class="form-control" rows="3"
+                              placeholder="Задайте въпрос или споделете мнение за имота…"></textarea>
+                    <span asp-validation-for="NewComment.Text" class="text-danger small"></span>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-send"></i> Публикувай коментар</button>
+            </form>
+        }
+        else
+        {
+            <p class="text-body-secondary small">
+                <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl">Влезте</a>, за да коментирате.
+            </p>
+        }
+
+        @if (comments.Count == 0)
+        {
+            <p class="text-body-secondary mb-0">Все още няма коментари.</p>
+        }
+        else
+        {
+            <ul class="list-unstyled mb-0 comment-list">
+                @foreach (var comment in comments)
+                {
+                    <li class="comment">
+                        <div class="d-flex justify-content-between align-items-start gap-2">
+                            <div>
+                                <strong>@comment.Author.DisplayName</strong>
+                                <span class="small text-body-secondary">· @Fmt.DateAndTime(comment.CreatedUtc)</span>
+                            </div>
+                            @if (comment.AuthorId == Model.CurrentUserId || Model.IsAdmin)
+                            {
+                                <form asp-controller="Comments" asp-action="Delete" asp-route-id="@comment.Id" method="post"
+                                      class="js-confirm" data-confirm="Да изтрия ли този коментар?">
+                                    <button type="submit" class="btn btn-link btn-sm text-danger p-0" title="Изтрий коментара">
+                                        <i class="bi bi-trash"></i><span class="visually-hidden">Изтрий</span>
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                        <p class="mb-0 comment-text">@comment.Text</p>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</section>

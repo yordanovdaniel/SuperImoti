@@ -1,0 +1,134 @@
+@model ListingIndexViewModel
+@{
+    var filter = Model.Filter;
+    const int visibleFeatures = 14;
+    var features = Model.Options.Features;
+    var moreFeatures = features.Skip(visibleFeatures).ToList();
+    var showMore = moreFeatures.Any(f => filter.Features.Contains(f.Id));
+}
+<form method="get" asp-action="Index" class="card card-body filter-card shadow-sm js-clean-get">
+    <div class="mb-3">
+        <label for="f-q" class="form-label fw-semibold">Търсене</label>
+        <input id="f-q" name="q" value="@filter.Q" class="form-control" maxlength="100" placeholder="метро, асансьор, Лозенец…" />
+    </div>
+
+    <div class="mb-3">
+        <span class="form-label fw-semibold d-block">Сделка</span>
+        <div class="btn-group w-100" role="group" aria-label="Сделка">
+            <input type="radio" class="btn-check" name="deal" id="f-deal-all" value="" checked="@(filter.Deal is null)" />
+            <label class="btn btn-outline-primary btn-sm" for="f-deal-all">Всички</label>
+            <input type="radio" class="btn-check" name="deal" id="f-deal-sale" value="Sale" checked="@(filter.Deal == DealKind.Sale)" />
+            <label class="btn btn-outline-primary btn-sm" for="f-deal-sale">Продажба</label>
+            <input type="radio" class="btn-check" name="deal" id="f-deal-rent" value="Rent" checked="@(filter.Deal == DealKind.Rent)" />
+            <label class="btn btn-outline-primary btn-sm" for="f-deal-rent">Наем</label>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label for="f-category" class="form-label fw-semibold">Категория</label>
+        <select id="f-category" name="category" class="form-select">
+            <option value="">Всички категории</option>
+            @foreach (var category in Enum.GetValues<PropertyCategory>())
+            {
+                <option value="@category" selected="@(filter.Category == category)">@category.GetDisplayName()</option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label for="f-type" class="form-label fw-semibold">Вид имот</label>
+        <select id="f-type" name="type" class="form-select">
+            <option value="">Всички видове</option>
+            @foreach (var group in Model.Options.PropertyTypesByCategory)
+            {
+                <optgroup label="@group.Key.GetDisplayName()">
+                    @foreach (var type in group)
+                    {
+                        <option value="@type.Id" selected="@(filter.Type == type.Id)">@type.Name</option>
+                    }
+                </optgroup>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label for="f-district" class="form-label fw-semibold">Квартал</label>
+        <select id="f-district" name="district" class="form-select">
+            <option value="">Всички квартали</option>
+            @foreach (var district in Model.Options.Districts)
+            {
+                <option value="@district.Id" selected="@(filter.District == district.Id)">@district.Name</option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <span class="form-label fw-semibold d-block">Цена (€)</span>
+        <div class="input-group input-group-sm">
+            <input type="number" name="minPrice" value="@filter.MinPrice" min="0" step="any" class="form-control" placeholder="от" aria-label="Цена от" />
+            <input type="number" name="maxPrice" value="@filter.MaxPrice" min="0" step="any" class="form-control" placeholder="до" aria-label="Цена до" />
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <span class="form-label fw-semibold d-block">Площ (м²)</span>
+        <div class="input-group input-group-sm">
+            <input type="number" name="minArea" value="@filter.MinArea" min="0" step="any" class="form-control" placeholder="от" aria-label="Площ от" />
+            <input type="number" name="maxArea" value="@filter.MaxArea" min="0" step="any" class="form-control" placeholder="до" aria-label="Площ до" />
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <span class="form-label fw-semibold d-block">Особености</span>
+        @foreach (var feature in features.Take(visibleFeatures))
+        {
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="features" value="@feature.Id" id="f-feature-@feature.Id"
+                       checked="@filter.Features.Contains(feature.Id)" />
+                <label class="form-check-label small" for="f-feature-@feature.Id">@feature.Name</label>
+            </div>
+        }
+        @if (moreFeatures.Count > 0)
+        {
+            <div class="collapse @(showMore ? "show" : null)" id="more-features">
+                @foreach (var feature in moreFeatures)
+                {
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="features" value="@feature.Id" id="f-feature-@feature.Id"
+                               checked="@filter.Features.Contains(feature.Id)" />
+                        <label class="form-check-label small" for="f-feature-@feature.Id">@feature.Name</label>
+                    </div>
+                }
+            </div>
+            <button class="btn btn-link btn-sm p-0" type="button" data-bs-toggle="collapse" data-bs-target="#more-features"
+                    aria-expanded="@(showMore ? "true" : "false")" aria-controls="more-features">
+                Още особености (@moreFeatures.Count)
+            </button>
+        }
+    </div>
+
+    <div class="form-check mb-1">
+        <input class="form-check-input" type="checkbox" name="photos" value="true" id="f-photos" checked="@filter.Photos" />
+        <label class="form-check-label" for="f-photos">Само със снимки</label>
+    </div>
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" name="inactive" value="true" id="f-inactive" checked="@filter.Inactive" />
+        <label class="form-check-label" for="f-inactive">Покажи и неактивните</label>
+    </div>
+
+    @if (filter.Seller is not null)
+    {
+        <input type="hidden" name="seller" value="@filter.Seller" />
+    }
+    @if (filter.SortKey != ListingSort.Recommended)
+    {
+        <input type="hidden" name="sort" value="@filter.SortKey" />
+    }
+    @if (filter.PageSize != ListingFilter.DefaultPageSize)
+    {
+        <input type="hidden" name="size" value="@filter.PageSize" />
+    }
+
+    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Покажи обявите</button>
+    <a asp-action="Index" class="btn btn-link btn-sm w-100 mt-1">Изчисти филтрите</a>
+</form>

@@ -1,0 +1,220 @@
+@model ListingDetailsViewModel
+@{
+    var listing = Model.Listing;
+    ViewData["Title"] = listing.Title;
+    var previousPrice = Model.PreviousPrice;
+    var favorite = new FavoriteButtonViewModel(listing.Id, Model.IsFavorite, Compact: false);
+    var duplicates = new ListingGridViewModel(Model.Duplicates, 4);
+    var similar = new ListingGridViewModel(Model.Similar, 4);
+    var phones = (listing.ContactPhone ?? listing.Seller?.Phones ?? string.Empty)
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(p => (Text: p, Link: "tel:" + p.Replace(" ", string.Empty)))
+        .ToList();
+    var sellerNote = listing.Seller?.MemberSince is string since ? $"Агенция · в imot.bg {since}" : "Агенция";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Начало</a></li>
+        <li class="breadcrumb-item">
+            <a asp-controller="Listings" asp-action="Index" asp-route-deal="@listing.DealKind">@(listing.DealKind == DealKind.Sale ? "Продажби" : "Наеми")</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a asp-controller="Districts" asp-action="Details" asp-route-id="@listing.DistrictId">@listing.District.Name</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">@listing.PropertyType.Name</li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <h1 class="h3 mb-1">@listing.Title</h1>
+        <div class="text-body-secondary">
+            <i class="bi bi-geo-alt"></i> @listing.District.Name, @listing.District.City
+            @if (listing.Street is not null)
+            {
+                <text>· @listing.Street</text>
+            }
+        </div>
+        <div class="mt-2 d-flex flex-wrap gap-2">
+            <span class="badge @(listing.DealKind == DealKind.Rent ? "deal-rent" : "deal-sale")">@listing.DealKind.GetDisplayName()</span>
+            <span class="badge text-bg-light border">@listing.PropertyType.Name</span>
+            @if (listing.Status == ListingStatus.Inactive)
+            {
+                <span class="badge text-bg-secondary">Неактивна от @Fmt.Date(listing.InactiveSinceUtc)</span>
+            }
+            @if (!listing.IsImported)
+            {
+                <span class="badge text-bg-warning">Публикувана в SuperImoti</span>
+            }
+            @if (Model.Duplicates.Count > 0)
+            {
+                <a href="#duplicates" class="badge text-bg-info text-decoration-none">@Model.Duplicates.Count обяви за същия имот</a>
+            }
+        </div>
+    </div>
+    @if (Model.CanEdit)
+    {
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-primary" asp-action="Edit" asp-route-id="@listing.Id"><i class="bi bi-pencil"></i> Редактирай</a>
+            <a class="btn btn-outline-danger" asp-action="Delete" asp-route-id="@listing.Id"><i class="bi bi-trash"></i> Изтрий</a>
+        </div>
+    }
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <partial name="_Gallery" model="Model" />
+
+        <section class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5">Описание</h2>
+                <p class="description-text mb-0">@(listing.Description ?? "Обявата няма описание.")</p>
+            </div>
+        </section>
+
+        @if (listing.Features.Count > 0)
+        {
+            <section class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h5">Особености</h2>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var link in listing.Features.OrderBy(f => f.Feature.Name))
+                        {
+                            <a class="badge feature-badge text-decoration-none" asp-action="Index" asp-route-features="@link.FeatureId"
+                               title="Всички обяви с „@link.Feature.Name“">
+                                <i class="bi bi-check2"></i> @link.Feature.Name
+                            </a>
+                        }
+                    </div>
+                </div>
+            </section>
+        }
+
+        <partial name="_PriceHistory" model="Model" />
+        <partial name="_Comments" model="Model" />
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4 price-card">
+            <div class="card-body">
+                <div class="display-price">@Fmt.Money(listing.Price, listing.Currency)</div>
+                @if (listing.PricePerSqm is not null)
+                {
+                    <div class="text-body-secondary">
+                        @Fmt.PerSqm(listing.PricePerSqm, listing.Currency)@(listing.DealKind == DealKind.Rent ? " на месец" : null)
+                    </div>
+                }
+                @if (previousPrice is decimal before && listing.Price is decimal now && before != now)
+                {
+                    <div class="small mt-1 @(now < before ? "text-success" : "text-danger")">
+                        <i class="bi @(now < before ? "bi-arrow-down" : "bi-arrow-up")"></i>
+                        Предишна цена: @Fmt.Money(before, listing.Currency)
+                    </div>
+                }
+                @if (listing.VatNote is not null)
+                {
+                    <div class="small text-body-secondary mt-1">@listing.VatNote</div>
+                }
+                <div class="d-flex gap-2 mt-3 align-items-center">
+                    <partial name="_FavoriteButton" model="favorite" />
+                    @if (Model.FavoriteCount > 0)
+                    {
+                        <span class="small text-body-secondary">Запазена от @Model.FavoriteCount души</span>
+                    }
+                </div>
+            </div>
+            <ul class="list-group list-group-flush small">
+                <li class="list-group-item d-flex justify-content-between"><span class="text-body-secondary">Площ</span><strong>@Fmt.Area(listing.Area)</strong></li>
+                @if (listing.Floor is not null || listing.TotalFloors is not null)
+                {
+                    <li class="list-group-item d-flex justify-content-between"><span class="text-body-secondary">Етаж</span><strong>@Fmt.Floor(listing.Floor, listing.TotalFloors)</strong></li>
+                }
+                @if (listing.ConstructionType is not null)
+                {
+                    <li class="list-group-item d-flex justify-content-between"><span class="text-body-secondary">Строителство</span><strong>@listing.ConstructionType</strong></li>
+                }
+                @if (listing.CompletionPeriod is not null)
+                {
+                    <li class="list-group-item d-flex justify-content-between"><span class="text-body-secondary">Година</span><strong>@listing.CompletionPeriod</strong></li>
+                }
+                <li class="list-group-item d-flex justify-content-between"><span class="text-body-secondary">Добавена</span><strong>@Fmt.Date(listing.CreatedUtc)</strong></li>
+                @if (listing.SourceUpdatedUtc is not null)
+                {
+                    <li class="list-group-item d-flex justify-content-between"><span class="text-body-secondary">Обновена в imot.bg</span><strong>@Fmt.Date(listing.SourceUpdatedUtc)</strong></li>
+                }
+                @if (listing.SourceViewCount is not null)
+                {
+                    <li class="list-group-item d-flex justify-content-between"><span class="text-body-secondary">Прегледи в imot.bg</span><strong>@Fmt.Number(listing.SourceViewCount.Value)</strong></li>
+                }
+                @if (listing.ExternalId is not null)
+                {
+                    <li class="list-group-item d-flex justify-content-between"><span class="text-body-secondary">Номер в imot.bg</span><code>@listing.ExternalId</code></li>
+                }
+            </ul>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h6 text-uppercase small text-body-secondary mb-2">Контакт</h2>
+                @if (listing.Seller is not null)
+                {
+                    <div class="fw-semibold">
+                        <a asp-controller="Sellers" asp-action="Details" asp-route-id="@listing.Seller.Id">@listing.Seller.Name</a>
+                    </div>
+                    <div class="small text-body-secondary">@sellerNote</div>
+                    @if (listing.Seller.OfficeAddress is not null)
+                    {
+                        <div class="small mt-1"><i class="bi bi-building"></i> @listing.Seller.OfficeAddress</div>
+                    }
+                }
+                else if (listing.Owner is not null)
+                {
+                    <div class="fw-semibold">@listing.Owner.DisplayName</div>
+                    <div class="small text-body-secondary">Потребител на SuperImoti</div>
+                }
+                else
+                {
+                    <div class="fw-semibold">Частно лице</div>
+                }
+                @if (phones.Count > 0)
+                {
+                    <div class="mt-2">
+                        @foreach (var phone in phones)
+                        {
+                            <a class="btn btn-sm btn-outline-primary me-1 mb-1" href="@phone.Link"><i class="bi bi-telephone"></i> @phone.Text</a>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (listing.SourceUrl is not null)
+        {
+            <a class="btn btn-outline-secondary w-100 mb-4" href="@listing.SourceUrl" target="_blank" rel="noopener noreferrer">
+                <i class="bi bi-box-arrow-up-right"></i> Виж обявата в imot.bg
+            </a>
+        }
+    </div>
+</div>
+
+@if (Model.Duplicates.Count > 0)
+{
+    <section id="duplicates" class="mt-2 mb-4">
+        <h2 class="h5">Същият имот в други обяви</h2>
+        <p class="small text-body-secondary">Скрейпърът е разпознал тези обяви като повторно публикувани или пуснати от няколко агенции.</p>
+        <partial name="_ListingGrid" model="duplicates" />
+    </section>
+}
+
+@if (Model.Similar.Count > 0)
+{
+    <section class="mt-2">
+        <h2 class="h5">Подобни обяви в @listing.District.Name</h2>
+        <partial name="_ListingGrid" model="similar" />
+    </section>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

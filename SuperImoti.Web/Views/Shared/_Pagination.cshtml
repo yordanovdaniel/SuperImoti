@@ -1,0 +1,27 @@
+@model PaginationViewModel
+@if (Model.TotalPages > 1)
+{
+    <nav aria-label="Страници" class="mt-4">
+        <ul class="pagination justify-content-center flex-wrap">
+            <li class="page-item @(Model.Page <= 1 ? "disabled" : null)">
+                <a class="page-link" href="@(Model.Page > 1 ? Model.PageUrl(Model.Page - 1) : "#")" aria-label="Предишна страница">&laquo;</a>
+            </li>
+            @foreach (var page in Model.Window())
+            {
+                if (page is int number)
+                {
+                    <li class="page-item @(number == Model.Page ? "active" : null)" aria-current="@(number == Model.Page ? "page" : null)">
+                        <a class="page-link" href="@Model.PageUrl(number)">@number</a>
+                    </li>
+                }
+                else
+                {
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                }
+            }
+            <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : null)">
+                <a class="page-link" href="@(Model.Page < Model.TotalPages ? Model.PageUrl(Model.Page + 1) : "#")" aria-label="Следваща страница">&raquo;</a>
+            </li>
+        </ul>
+    </nav>
+}

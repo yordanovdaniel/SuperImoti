@@ -1,0 +1,53 @@
+@model ListingDetailsViewModel
+@{
+    var photos = Model.Photos;
+    var title = Model.Listing.Title;
+}
+@if (photos.Count == 0)
+{
+    <div class="gallery-empty card mb-4">
+        <img src="~/img/placeholder.svg" alt="Обявата няма снимки" class="w-100" />
+    </div>
+}
+else
+{
+    <div id="gallery" class="carousel slide gallery mb-2">
+        <div class="carousel-inner rounded-3">
+            @for (var i = 0; i < photos.Count; i++)
+            {
+                <div class="carousel-item @(i == 0 ? "active" : null)">
+                    <img src="@photos[i].Url" class="d-block w-100 gallery-img" alt="@title — снимка @(i + 1)"
+                         loading="@(i == 0 ? "eager" : "lazy")" onerror="this.onerror=null;this.src='/img/placeholder.svg';" />
+                </div>
+            }
+        </div>
+        @if (photos.Count > 1)
+        {
+            <button class="carousel-control-prev" type="button" data-bs-target="#gallery" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Предишна снимка</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#gallery" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Следваща снимка</span>
+            </button>
+            <div class="gallery-counter badge text-bg-dark"><span class="js-gallery-index">1</span> / @photos.Count</div>
+        }
+    </div>
+    @if (photos.Count > 1)
+    {
+        <div class="gallery-thumbs d-flex gap-2 overflow-auto mb-4 pb-1">
+            @for (var i = 0; i < photos.Count; i++)
+            {
+                <button type="button" class="gallery-thumb @(i == 0 ? "active" : null)" data-bs-target="#gallery"
+                        data-bs-slide-to="@i" aria-label="Снимка @(i + 1)">
+                    <img src="@photos[i].Url" alt="" loading="lazy" onerror="this.onerror=null;this.src='/img/placeholder.svg';" />
+                </button>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="mb-4"></div>
+    }
+}

@@ -1,0 +1,55 @@
+@model ListingDetailsViewModel
+@{
+    var events = Model.Listing.Events;
+}
+@if (events.Count > 0)
+{
+    <section class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h5 mb-3">История на обявата</h2>
+            <ul class="timeline list-unstyled mb-0">
+                @foreach (var item in events)
+                {
+                    var currency = item.Currency ?? Currency.EUR;
+                    <li class="timeline-item">
+                        <div class="small text-body-secondary">@Fmt.DateAndTime(item.OccurredUtc)</div>
+                        @switch (item.Kind)
+                        {
+                            case ListingEventKind.PriceChange when item.Price is decimal now && item.OldPrice is decimal before:
+                                <div class="@(now < before ? "text-success" : "text-danger")">
+                                    <i class="bi @(now < before ? "bi-arrow-down-circle" : "bi-arrow-up-circle")"></i>
+                                    Цената е @(now < before ? "намалена" : "увеличена"):
+                                    @Fmt.Money(before, currency) → <strong>@Fmt.Money(now, currency)</strong>
+                                </div>
+                                break;
+                            case ListingEventKind.PriceChange:
+                                <div><i class="bi bi-currency-euro"></i> Цената е променена.</div>
+                                break;
+                            case ListingEventKind.StatusChange:
+                                <div>
+                                    <i class="bi bi-flag"></i>
+                                    @(item.Status == ListingStatus.Inactive ? "Обявата е свалена от imot.bg." : "Обявата отново е активна.")
+                                </div>
+                                break;
+                            case ListingEventKind.Discovered:
+                                <div>
+                                    <i class="bi bi-search"></i> Открита в imot.bg
+                                    @if (item.Price is not null)
+                                    {
+                                        <text>на цена @Fmt.Money(item.Price, currency)</text>
+                                    }
+                                </div>
+                                break;
+                            case ListingEventKind.Published:
+                                <div><i class="bi bi-megaphone"></i> Публикувана в SuperImoti на цена @Fmt.Money(item.Price, currency)</div>
+                                break;
+                            default:
+                                <div><i class="bi bi-pencil"></i> Обявата е редактирана.</div>
+                                break;
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+    </section>
+}

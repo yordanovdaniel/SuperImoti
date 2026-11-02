@@ -1,0 +1,114 @@
+@model HomeIndexViewModel
+@{
+    ViewData["Title"] = "Имоти в София";
+    var latest = new ListingGridViewModel(Model.Latest, 4,
+        "Все още няма обяви. Ако е настроена папката на скрейпъра, импортът ще ги зареди до минута.");
+    var drops = new ListingGridViewModel(Model.PriceDrops, 4);
+}
+
+@section Hero {
+    <section class="hero">
+        <div class="container py-5">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-6 text-white">
+                    <h1 class="display-5 fw-bold">Намерете своя дом в София</h1>
+                    <p class="lead mb-0">
+                        @Fmt.Number(Model.ActiveCount) актуални обяви от imot.bg — с филтри, история на цените,
+                        статистика по квартали и възможност да публикувате собствена обява.
+                    </p>
+                </div>
+                <div class="col-lg-6">
+                    <form asp-controller="Listings" asp-action="Index" method="get" class="card card-body shadow hero-search js-clean-get">
+                        <div class="btn-group w-100 mb-3" role="group" aria-label="Вид сделка">
+                            <input type="radio" class="btn-check" name="deal" id="hero-sale" value="Sale" checked />
+                            <label class="btn btn-outline-primary" for="hero-sale"><i class="bi bi-key"></i> Купи</label>
+                            <input type="radio" class="btn-check" name="deal" id="hero-rent" value="Rent" />
+                            <label class="btn btn-outline-primary" for="hero-rent"><i class="bi bi-calendar-check"></i> Наеми</label>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-sm-6">
+                                <label class="form-label small" for="hero-type">Вид имот</label>
+                                <select id="hero-type" name="type" class="form-select">
+                                    <option value="">Всички</option>
+                                    @foreach (var group in Model.Options.PropertyTypesByCategory)
+                                    {
+                                        <optgroup label="@group.Key.GetDisplayName()">
+                                            @foreach (var type in group)
+                                            {
+                                                <option value="@type.Id">@type.Name</option>
+                                            }
+                                        </optgroup>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label small" for="hero-district">Квартал</label>
+                                <select id="hero-district" name="district" class="form-select">
+                                    <option value="">Всички квартали</option>
+                                    @foreach (var district in Model.Options.Districts)
+                                    {
+                                        <option value="@district.Id">@district.Name</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label small" for="hero-max">Цена до (€)</label>
+                                <input id="hero-max" type="number" name="maxPrice" min="0" step="any" class="form-control" placeholder="без ограничение" />
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label small" for="hero-q">Ключови думи</label>
+                                <input id="hero-q" name="q" class="form-control" maxlength="100" placeholder="метро, асансьор…" />
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg mt-3"><i class="bi bi-search"></i> Търси</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+<section class="row row-cols-2 row-cols-md-3 row-cols-xl-6 g-3 mb-5" aria-label="Статистика">
+    <div class="col"><div class="stat-tile"><div class="stat-value">@Fmt.Number(Model.ActiveCount)</div><div class="stat-label">активни обяви</div></div></div>
+    <div class="col"><div class="stat-tile"><div class="stat-value">@Fmt.Number(Model.SaleCount)</div><div class="stat-label">за продажба</div></div></div>
+    <div class="col"><div class="stat-tile"><div class="stat-value">@Fmt.Number(Model.RentCount)</div><div class="stat-label">под наем</div></div></div>
+    <div class="col"><div class="stat-tile"><div class="stat-value">@Fmt.Number(Model.SellerCount)</div><div class="stat-label">агенции</div></div></div>
+    <div class="col"><div class="stat-tile"><div class="stat-value">@Fmt.Number(Model.PhotoCount)</div><div class="stat-label">снимки</div></div></div>
+    <div class="col">
+        <div class="stat-tile">
+            <div class="stat-value">@(Model.AvgApartmentSalePricePerSqm is null ? "—" : Fmt.Money(Math.Round(Model.AvgApartmentSalePricePerSqm.Value)))</div>
+            <div class="stat-label">средна цена/м² на апартамент</div>
+        </div>
+    </div>
+</section>
+
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-3">
+        <h2 class="h4 mb-0">Най-нови обяви</h2>
+        <a asp-controller="Listings" asp-action="Index" asp-route-sort="newest">Виж всички <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <partial name="_ListingGrid" model="latest" />
+</section>
+
+@if (Model.PriceDrops.Count > 0)
+{
+    <section class="mb-5">
+        <div class="d-flex justify-content-between align-items-end mb-3">
+            <h2 class="h4 mb-0"><i class="bi bi-graph-down-arrow text-success"></i> Намалени цени</h2>
+        </div>
+        <partial name="_ListingGrid" model="drops" />
+    </section>
+}
+
+<section class="mb-4">
+    <h2 class="h4 mb-3">Популярни квартали</h2>
+    <div class="d-flex flex-wrap gap-2">
+        @foreach (var district in Model.TopDistricts)
+        {
+            <a class="btn btn-outline-secondary btn-sm" asp-controller="Districts" asp-action="Details" asp-route-id="@district.Id">
+                @district.Name <span class="badge text-bg-light">@Fmt.Number(district.Count)</span>
+            </a>
+        }
+        <a class="btn btn-link btn-sm" asp-controller="Districts" asp-action="Index">Всички квартали <i class="bi bi-arrow-right"></i></a>
+    </div>
+</section>

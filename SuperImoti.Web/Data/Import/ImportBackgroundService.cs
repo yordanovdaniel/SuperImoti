@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using SuperImoti.Web.Services;
 
 namespace SuperImoti.Web.Data.Import;
 
@@ -52,6 +53,7 @@ public sealed class ImportBackgroundService(
             var importer = scope.ServiceProvider.GetRequiredService<ScraperImporter>();
             var result = await importer.RunAsync(coordinator.Report, stoppingToken);
 
+            scope.ServiceProvider.GetRequiredService<LookupService>().Invalidate();
             coordinator.MarkCompleted(result);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

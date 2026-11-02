@@ -1,0 +1,21 @@
+@using SuperImoti.Web.Data.Import
+@inject ImportCoordinator ImportCoordinator
+@{
+    var status = ImportCoordinator.Snapshot();
+}
+@if (status.IsRunning)
+{
+    <div class="import-banner py-2" role="status">
+        <div class="container d-flex align-items-center gap-2 small">
+            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+            <span>
+                Синхронизация с данните от imot.bg: <strong>@status.Stage</strong>
+                @if (status.Total > 0)
+                {
+                    <text>— @Fmt.Number(status.Processed) от @Fmt.Number(status.Total) (@status.Percent%).</text>
+                }
+                Обявите се появяват постепенно.
+            </span>
+        </div>
+    </div>
+}

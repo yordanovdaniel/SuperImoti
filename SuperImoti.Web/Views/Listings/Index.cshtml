@@ -1,0 +1,83 @@
+@model ListingIndexViewModel
+@{
+    var filter = Model.Filter;
+    var results = Model.Results;
+    ViewData["Title"] = filter.Deal switch
+    {
+        DealKind.Sale => "Имоти за продажба",
+        DealKind.Rent => "Имоти под наем",
+        _ => "Обяви за имоти",
+    };
+    var indexUrl = Url.Action("Index")!;
+    var exportUrl = Url.Action("Export") + filter.ToQueryString(page: 1);
+    var grid = new ListingGridViewModel(results.Items, 3,
+        "Няма обяви, които отговарят на филтрите. Опитайте с по-широко търсене.");
+    var pager = new PaginationViewModel
+    {
+        Page = results.Page,
+        TotalPages = results.TotalPages,
+        PageUrl = page => indexUrl + filter.ToQueryString(page: page),
+    };
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+    <div>
+        <h1 class="h3 mb-1">@ViewData["Title"]</h1>
+        <div class="text-body-secondary small">
+            @if (results.TotalCount == 0)
+            {
+                <text>Няма намерени обяви</text>
+            }
+            else
+            {
+                <text>Показани @Fmt.Number(results.FirstItem)–@Fmt.Number(results.LastItem) от @Fmt.Number(results.TotalCount) обяви</text>
+            }
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <button class="btn btn-sm btn-outline-secondary d-lg-none" type="button" data-bs-toggle="collapse"
+                data-bs-target="#filters" aria-expanded="false" aria-controls="filters">
+            <i class="bi bi-funnel"></i> Филтри
+            @if (filter.ActiveFilterCount > 0)
+            {
+                <span class="badge text-bg-primary">@filter.ActiveFilterCount</span>
+            }
+        </button>
+        <label class="visually-hidden" for="sort-select">Подреждане</label>
+        <select id="sort-select" class="form-select form-select-sm w-auto js-nav-select">
+            @foreach (var (key, label) in ListingSort.Options)
+            {
+                <option value="@(indexUrl + filter.ToQueryString(page: 1, sort: key))" selected="@(key == filter.SortKey)">@label</option>
+            }
+        </select>
+        <label class="visually-hidden" for="size-select">Обяви на страница</label>
+        <select id="size-select" class="form-select form-select-sm w-auto js-nav-select">
+            @foreach (var size in ListingFilter.PageSizes)
+            {
+                <option value="@(indexUrl + filter.ToQueryString(page: 1, size: size))" selected="@(size == filter.PageSize)">@size на страница</option>
+            }
+        </select>
+        <a class="btn btn-sm btn-outline-success" href="@exportUrl" title="Изтегли намерените обяви като CSV файл">
+            <i class="bi bi-filetype-csv"></i> Експорт
+        </a>
+    </div>
+</div>
+
+@if (Model.Warnings.Count > 0)
+{
+    <div class="alert alert-warning small" role="alert">
+        <i class="bi bi-exclamation-triangle"></i> @string.Join(" ", Model.Warnings)
+    </div>
+}
+
+<div class="row g-4">
+    <aside class="col-lg-3">
+        <div class="collapse d-lg-block" id="filters">
+            <partial name="_Filters" model="Model" />
+        </div>
+    </aside>
+    <div class="col-lg-9">
+        <partial name="_ListingGrid" model="grid" />
+        <partial name="_Pagination" model="pager" />
+    </div>
+</div>

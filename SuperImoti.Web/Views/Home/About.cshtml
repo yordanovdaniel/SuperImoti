@@ -1,0 +1,83 @@
+@model AboutViewModel
+@{
+    ViewData["Title"] = "За проекта";
+}
+<div class="row g-4">
+    <div class="col-lg-8">
+        <h1 class="h2">За проекта SuperImoti</h1>
+        <p class="lead">
+            SuperImoti показва обявите за имоти в София, събрани от imot.bg със собствен скрейпър,
+            и позволява на регистрираните потребители да публикуват свои обяви.
+        </p>
+
+        <section class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5"><i class="bi bi-people"></i> Екип</h2>
+                <ul class="list-unstyled mb-0">
+                    <li><strong>Даниел Йорданов</strong> — идея, база данни, back-end, front-end, импорт на данните</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5"><i class="bi bi-list-check"></i> Основни функции</h2>
+                <ul class="mb-0">
+                    <li>Търсене и филтриране на обявите по сделка, вид имот, квартал, цена, площ и особености.</li>
+                    <li>Подреждане и страниране на резултатите; експорт на резултатите в CSV.</li>
+                    <li>Подробна страница на обявата с галерия, история на цената, подобни обяви и възможни дубликати.</li>
+                    <li>Регистрация и вход; публикуване, редактиране и изтриване на собствени обяви (пълен CRUD) с качване на снимки.</li>
+                    <li>Коментари под обявите и списък с любими обяви.</li>
+                    <li>Профили на агенциите и статистика по квартали (страницата е на Vue.js).</li>
+                    <li>Имейл известие до абонираните потребители при всяка нова обява.</li>
+                    <li>Администрация: синхронизация с данните на скрейпъра и управление на кварталите.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5"><i class="bi bi-cpu"></i> Използвани технологии</h2>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="mb-0">
+                            <li>.NET 10, ASP.NET Core MVC</li>
+                            <li>Razor изгледи: Layout, Partial Views, Sections</li>
+                            <li>Entity Framework Core 10 + SQLite</li>
+                            <li>ASP.NET Core Identity</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="mb-0">
+                            <li>Bootstrap 5.3 и Bootstrap Icons</li>
+                            <li>jQuery Validation (валидация в браузъра)</li>
+                            <li>Vue.js 3 (страница „Статистика“)</li>
+                            <li>xUnit (автоматични тестове)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h5">Данните в момента</h2>
+                <dl class="row small mb-0">
+                    <dt class="col-8">Обяви общо</dt><dd class="col-4 text-end">@Fmt.Number(Model.ListingCount)</dd>
+                    <dt class="col-8">— от imot.bg</dt><dd class="col-4 text-end">@Fmt.Number(Model.ImportedCount)</dd>
+                    <dt class="col-8">— от потребители</dt><dd class="col-4 text-end">@Fmt.Number(Model.UserListingCount)</dd>
+                    <dt class="col-8">Снимки</dt><dd class="col-4 text-end">@Fmt.Number(Model.PhotoCount)</dd>
+                    <dt class="col-8">Агенции</dt><dd class="col-4 text-end">@Fmt.Number(Model.SellerCount)</dd>
+                    <dt class="col-8">Квартали</dt><dd class="col-4 text-end">@Fmt.Number(Model.DistrictCount)</dd>
+                    <dt class="col-8">Потребители</dt><dd class="col-4 text-end">@Fmt.Number(Model.UserCount)</dd>
+                    <dt class="col-8">Коментари</dt><dd class="col-4 text-end">@Fmt.Number(Model.CommentCount)</dd>
+                </dl>
+            </div>
+        </div>
+        <p class="small text-body-secondary mt-3">
+            Обявите и снимките принадлежат на авторите им в imot.bg. Проектът е учебен и не е свързан с imot.bg.
+        </p>
+    </div>
+</div>
