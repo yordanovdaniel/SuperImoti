@@ -10,16 +10,19 @@ public sealed class SiteFactory : WebApplicationFactory<Program>
     public const string AdminEmail = "admin@test.local";
 
     /// <summary>A fresh random password for each test run, so no password is stored in the repository.</summary>
-    public string AdminPassword { get; } = $"Adm-{Guid.NewGuid():N}-7";
+    public string AdminPassword { get; init; } = $"Adm-{Guid.NewGuid():N}-7";
 
-    private readonly string _databasePath = Path.Combine(Path.GetTempPath(), $"superimoti-test-{Guid.NewGuid():N}.db");
+    /// <summary>Two factories can share one database to test what happens when the site restarts.</summary>
+    public string DatabasePath { get; init; } = Path.Combine(Path.GetTempPath(), $"superimoti-test-{Guid.NewGuid():N}.db");
+
+    public bool DeleteDatabaseOnDispose { get; init; } = true;
 
     public string MailFolder { get; } = Path.Combine(Path.GetTempPath(), $"superimoti-mail-{Guid.NewGuid():N}");
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
-        builder.UseSetting("ConnectionStrings:DefaultConnection", $"Data Source={_databasePath}");
+        builder.UseSetting("ConnectionStrings:DefaultConnection", $"Data Source={DatabasePath}");
         builder.UseSetting("ScraperData:SourceFolder", string.Empty);
         builder.UseSetting("ScraperData:SyncOnStartup", "false");
         builder.UseSetting("AdminUser:Email", AdminEmail);
@@ -32,15 +35,19 @@ public sealed class SiteFactory : WebApplicationFactory<Program>
     {
         base.Dispose(disposing);
         SqliteConnection.ClearAllPools();
-        foreach (var path in new[] { _databasePath, _databasePath + "-wal", _databasePath + "-shm" })
+
+        if (DeleteDatabaseOnDispose)
         {
-            try
+            foreach (var path in new[] { DatabasePath, DatabasePath + "-wal", DatabasePath + "-shm" })
             {
-                File.Delete(path);
-            }
-            catch (IOException)
-            {
-                // A file still in use is left in the temp folder.
+                try
+                {
+                    File.Delete(path);
+                }
+                catch (IOException)
+                {
+                    // A file still in use is left in the temp folder.
+                }
             }
         }
 

@@ -6,7 +6,10 @@ using SuperImoti.Web.Models;
 
 namespace SuperImoti.Web.Data;
 
-/// <summary>Creates/updates the database on startup and seeds lookup data, roles and the admin account.</summary>
+/// <summary>
+/// Creates/updates the database on startup and seeds lookup data, roles and the admin account.
+/// The admin password follows the AdminUser:Password setting, so changing that setting and restarting changes it.
+/// </summary>
 public static class DbInitializer
 {
     public static async Task InitializeAsync(IServiceProvider services)
@@ -103,11 +106,36 @@ public static class DbInitializer
                 return;
             }
         }
+        else if (!await userManager.CheckPasswordAsync(admin, password))
+        {
+            // The configured password always wins: set a new one in user secrets, restart, and it applies.
+            await UpdateAdminPasswordAsync(userManager, admin, password, logger);
+        }
 
         if (!await userManager.IsInRoleAsync(admin, AppRoles.Administrator))
         {
             await userManager.AddToRoleAsync(admin, AppRoles.Administrator);
         }
+    }
+
+    /// <summary>Replaces the administrator's password with the configured one and lifts a lockout.</summary>
+    private static async Task UpdateAdminPasswordAsync(
+        UserManager<ApplicationUser> userManager, ApplicationUser admin, string password, ILogger logger)
+    {
+        // A reset validates the new password first, so an invalid one leaves the old password in place.
+        var token = await userManager.GeneratePasswordResetTokenAsync(admin);
+        var result = await userManager.ResetPasswordAsync(admin, token, password);
+        if (!result.Succeeded)
+        {
+            logger.LogError(
+                "Could not update the administrator password: {Errors}",
+                string.Join("; ", result.Errors.Select(e => e.Description)));
+            return;
+        }
+
+        await userManager.ResetAccessFailedCountAsync(admin);
+        await userManager.SetLockoutEndDateAsync(admin, null);
+        logger.LogInformation("The administrator password was updated from configuration.");
     }
 
     private sealed class LookupSeed
