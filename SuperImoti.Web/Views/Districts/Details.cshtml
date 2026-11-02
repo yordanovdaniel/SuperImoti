@@ -1,0 +1,73 @@
+@model DistrictDetailsViewModel
+@{
+    var stats = Model.Stats;
+    ViewData["Title"] = $"{stats.Name} — имоти";
+    var grid = new ListingGridViewModel(Model.Listings.Items, 3, "В този квартал няма активни обяви.");
+    var pager = new PaginationViewModel
+    {
+        Page = Model.Listings.Page,
+        TotalPages = Model.Listings.TotalPages,
+        PageUrl = page => Url.Action("Details", new { id = stats.Id, deal = Model.Deal, page })!,
+    };
+}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Начало</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index">Квартали</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@stats.Name</li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+        <h1 class="h3 mb-0">@stats.Name</h1>
+        <div class="text-body-secondary">@stats.City</div>
+    </div>
+    @if (User.IsAdmin())
+    {
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-primary btn-sm" asp-action="Edit" asp-route-id="@stats.Id"><i class="bi bi-pencil"></i> Редактирай</a>
+            <a class="btn btn-outline-danger btn-sm" asp-action="Delete" asp-route-id="@stats.Id"><i class="bi bi-trash"></i> Изтрий</a>
+        </div>
+    }
+</div>
+
+<div class="row row-cols-2 row-cols-md-4 g-3 mb-4">
+    <div class="col"><div class="stat-tile"><div class="stat-value">@Fmt.Number(stats.SaleCount)</div><div class="stat-label">за продажба</div></div></div>
+    <div class="col"><div class="stat-tile"><div class="stat-value">@Fmt.Number(stats.RentCount)</div><div class="stat-label">под наем</div></div></div>
+    <div class="col">
+        <div class="stat-tile">
+            <div class="stat-value">@(stats.AvgApartmentSalePricePerSqm is null ? "—" : Fmt.Money(Math.Round(stats.AvgApartmentSalePricePerSqm.Value)))</div>
+            <div class="stat-label">средна цена/м² (апартаменти)</div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="stat-tile">
+            <div class="stat-value">@(stats.AvgApartmentRent is null ? "—" : Fmt.Money(Math.Round(stats.AvgApartmentRent.Value)))</div>
+            <div class="stat-label">среден наем (апартаменти)</div>
+        </div>
+    </div>
+</div>
+
+@if (Model.TypeBreakdown.Count > 0)
+{
+    <div class="mb-4 d-flex flex-wrap gap-2">
+        @foreach (var (type, count) in Model.TypeBreakdown)
+        {
+            <span class="badge text-bg-light border">@type: @Fmt.Number(count)</span>
+        }
+    </div>
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <ul class="nav nav-pills">
+        <li class="nav-item"><a class="nav-link @(Model.Deal is null ? "active" : null)" asp-action="Details" asp-route-id="@stats.Id">Всички</a></li>
+        <li class="nav-item"><a class="nav-link @(Model.Deal == DealKind.Sale ? "active" : null)" asp-action="Details" asp-route-id="@stats.Id" asp-route-deal="Sale">Продажби</a></li>
+        <li class="nav-item"><a class="nav-link @(Model.Deal == DealKind.Rent ? "active" : null)" asp-action="Details" asp-route-id="@stats.Id" asp-route-deal="Rent">Наеми</a></li>
+    </ul>
+    <a asp-controller="Listings" asp-action="Index" asp-route-district="@stats.Id" asp-route-deal="@Model.Deal">
+        Търсене с филтри в квартала <i class="bi bi-arrow-right"></i>
+    </a>
+</div>
+<partial name="_ListingGrid" model="grid" />
+<partial name="_Pagination" model="pager" />

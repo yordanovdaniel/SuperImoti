@@ -1,0 +1,13 @@
+@model DistrictFormModel
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+<input type="hidden" asp-for="Id" />
+<div class="mb-3">
+    <label asp-for="Name" class="form-label required"></label>
+    <input asp-for="Name" class="form-control" placeholder="напр. Младост 5" />
+    <span asp-validation-for="Name" class="text-danger small"></span>
+</div>
+<div class="mb-3">
+    <label asp-for="City" class="form-label required"></label>
+    <input asp-for="City" class="form-control" />
+    <span asp-validation-for="City" class="text-danger small"></span>
+</div>

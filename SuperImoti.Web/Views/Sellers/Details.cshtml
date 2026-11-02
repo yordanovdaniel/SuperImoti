@@ -1,0 +1,73 @@
+@model SellerDetailsViewModel
+@{
+    var seller = Model.Seller;
+    ViewData["Title"] = seller.Name;
+    var grid = new ListingGridViewModel(Model.Listings.Items, 3, "Агенцията няма активни обяви.");
+    var pager = new PaginationViewModel
+    {
+        Page = Model.Listings.Page,
+        TotalPages = Model.Listings.TotalPages,
+        PageUrl = page => Url.Action("Details", new { id = seller.Id, page })!,
+    };
+    var phones = (seller.Phones ?? string.Empty)
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(p => (Text: p, Link: "tel:" + p.Replace(" ", string.Empty)))
+        .ToList();
+}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Начало</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index">Агенции</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@seller.Name</li>
+    </ol>
+</nav>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <h1 class="h3 mb-1">@seller.Name</h1>
+        @if (seller.MemberSince is not null)
+        {
+            <div class="text-body-secondary">Агенция в imot.bg @seller.MemberSince</div>
+        }
+        @if (seller.OfficeAddress is not null)
+        {
+            <div class="mt-2"><i class="bi bi-building"></i> @seller.OfficeAddress</div>
+        }
+        <div class="mt-2">
+            @foreach (var phone in phones)
+            {
+                <a class="btn btn-sm btn-outline-primary me-1 mb-1" href="@phone.Link"><i class="bi bi-telephone"></i> @phone.Text</a>
+            }
+            @if (seller.Subdomain is not null)
+            {
+                <a class="btn btn-sm btn-outline-secondary mb-1" href="https://@seller.Subdomain" target="_blank" rel="noopener noreferrer">
+                    <i class="bi bi-box-arrow-up-right"></i> Страница в imot.bg
+                </a>
+            }
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="row g-2">
+            <div class="col-6"><div class="stat-tile"><div class="stat-value">@Fmt.Number(Model.SaleCount)</div><div class="stat-label">за продажба</div></div></div>
+            <div class="col-6"><div class="stat-tile"><div class="stat-value">@Fmt.Number(Model.RentCount)</div><div class="stat-label">под наем</div></div></div>
+        </div>
+        @if (Model.TopDistricts.Count > 0)
+        {
+            <div class="small mt-3">
+                <div class="text-body-secondary mb-1">Най-много обяви в:</div>
+                @foreach (var district in Model.TopDistricts)
+                {
+                    <a class="badge text-bg-light border text-decoration-none me-1 mb-1" asp-controller="Listings" asp-action="Index"
+                       asp-route-seller="@seller.Id" asp-route-district="@district.Id">@district.Name (@district.Count)</a>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-end mb-3">
+    <h2 class="h5 mb-0">Активни обяви</h2>
+    <a asp-controller="Listings" asp-action="Index" asp-route-seller="@seller.Id">Филтрирай обявите на агенцията <i class="bi bi-arrow-right"></i></a>
+</div>
+<partial name="_ListingGrid" model="grid" />
+<partial name="_Pagination" model="pager" />

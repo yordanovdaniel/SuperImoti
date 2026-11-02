@@ -1,0 +1,20 @@
+@model DistrictFormModel
+@{
+    ViewData["Title"] = "Редактиране на квартал";
+}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <h1 class="h3 mb-3">Редактиране на квартал</h1>
+        <form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="card card-body shadow-sm">
+            <partial name="_DistrictForm" model="Model" />
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Запази</button>
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link">Отказ</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
