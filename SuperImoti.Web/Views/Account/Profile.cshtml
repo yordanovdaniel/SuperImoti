@@ -1,0 +1,52 @@
+@model ProfilePageViewModel
+@{
+    ViewData["Title"] = "Профил";
+}
+<div class="row g-4">
+    <div class="col-lg-7">
+        <h1 class="h3 mb-3">Моят профил</h1>
+        <form asp-action="Profile" method="post" class="card card-body shadow-sm">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            <div class="mb-3">
+                <label class="form-label" for="email">Имейл</label>
+                <input id="email" class="form-control" value="@Model.Email" readonly />
+            </div>
+            <div class="mb-3">
+                <label asp-for="Input.DisplayName" class="form-label required"></label>
+                <input asp-for="Input.DisplayName" class="form-control" />
+                <span asp-validation-for="Input.DisplayName" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Input.PhoneNumber" class="form-label"></label>
+                <input asp-for="Input.PhoneNumber" type="tel" class="form-control" placeholder="0888 123 456" />
+                <div class="form-text">Попълва се автоматично в новите ви обяви.</div>
+                <span asp-validation-for="Input.PhoneNumber" class="text-danger small"></span>
+            </div>
+            <div class="form-check mb-3">
+                <input asp-for="Input.NotifyAboutNewListings" class="form-check-input" />
+                <label asp-for="Input.NotifyAboutNewListings" class="form-check-label"></label>
+            </div>
+            <div>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Запази</button>
+            </div>
+        </form>
+    </div>
+    <div class="col-lg-5">
+        <div class="card shadow-sm mt-lg-5">
+            <div class="card-body">
+                <h2 class="h5">Активност</h2>
+                <dl class="row small mb-0">
+                    <dt class="col-7">Регистриран на</dt><dd class="col-5 text-end">@Fmt.Date(Model.CreatedUtc)</dd>
+                    <dt class="col-7">Публикувани обяви</dt><dd class="col-5 text-end"><a asp-controller="Listings" asp-action="Mine">@Model.ListingCount</a></dd>
+                    <dt class="col-7">Любими обяви</dt><dd class="col-5 text-end"><a asp-controller="Favorites" asp-action="Index">@Model.FavoriteCount</a></dd>
+                    <dt class="col-7">Коментари</dt><dd class="col-5 text-end">@Model.CommentCount</dd>
+                    <dt class="col-7">Роля</dt><dd class="col-5 text-end">@(Model.IsAdmin ? "Администратор" : "Потребител")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
